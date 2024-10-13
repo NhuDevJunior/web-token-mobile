@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+</head>
+
+<body>
+    <div style="
+        padding: 20px;
+        border-radius: 8px;
+        width: 500px;
+        margin: auto;
+        border: 1px solid black;
+        margin-bottom: 50px;
+      ">
+        <div style="margin-bottom: 20px">
+            <span>Môi trường</span>
+            <select name="env" id="env" style="width: 482px; padding: 5px 10px">
+                <option value="0">Dev</option>
+                <option value="1">Preview</option>
+                <option value="2">Staging</option>
+                <option value="3">Beta</option>
+            </select>
+        </div>
+        <div style="">
+            <span>Năm học</span>
+            <div>
+                <input id="namhoc" style="width: 460px; padding: 5px 10px" value="2022-2023" />
+            </div>
+        </div>
+        <div style="margin-top: 20px">
+            <span>Mã Tỉnh/Thành phố</span>
+            <div>
+                <input id="maTinh" style="width: 460px; padding: 5px 10px" value="12" />
+            </div>
+        </div>
+        <div style="margin-top: 20px">
+            <span>Tên đăng nhập</span>
+            <input id="username" style="width: 460px; padding: 5px 10px" value="0366886199" />
+        </div>
+        <div style="margin-top: 20px">
+            <span>Mật khẩu</span>
+            <input id="password" style="width: 460px; padding: 5px 10px" value="VTEDU!@#40" />
+        </div>
+        <div style="margin-top: 20px; text-align: center">
+            <input type="button" id="btn-Login" value="Đăng nhập" onclick="DangNhap()" />
+        </div>
+    </div>
+    <div id="list" style="
+        margin-top: 50px;
+        padding: 20px;
+        border-radius: 8px;
+        width: 500px;
+        margin: auto;
+        border: 1px solid black;
+      "></div>
+</body>
+
+<script>
+    var BaseUrl = "";
+    var BaseSSO = "";
+    var Token = ''
+    function createElementFromHTML(htmlString) {
+        var div = document.createElement("div");
+        div.innerHTML = htmlString.trim();
+
+        // Change this to div.childNodes to support multiple top-level nodes.
+        return div;
+    }
+
+    async function check(tenantId, studentId) {
+
+
+        const namhoc = document.getElementById('namhoc').value
+        const response = await fetch(`${BaseUrl}/api/identity/users/login-eduone-ver2/${tenantId}/${studentId}`, {
+            method: "POST",
+            headers: new Headers({ "Content-Type": "application/json" }),
+            headers: new Headers({
+                Authorization: `Bearer ${Token}`,
+                SchoolYear: namhoc
+            }),
+            // ...
+        }).then(res => {
+          res.json().then(res1 => {
+            Token = res1.access_token
+            alert("Thành công")
+          }).catch(err =>{
+            alert("Thất bại")
+
+          } ) 
+        })
+    }
+
+    async function DangNhap() {
+        let maTinh = document.getElementById("maTinh").value;
+        let usernameInput = document.getElementById("username").value;
+        let passwordInput = document.getElementById("password").value;
+        let env = document.getElementById("env");
+
+        switch (env.value) {
+            case 0:
+                BaseSSO = "https://sso.vtsmas.vn";
+                BaseUrl = "https://gateway.vtsmas.vn";
+                break;
+            case 1:
+                BaseSSO = "https://preview-sso.vtsmas.vn";
+                BaseUrl = "https://preview-gateway.vtsmas.vn";
+                break;
+            case 2:
+                BaseSSO = "http://staging-sso.vtsmas.vn";
+                BaseUrl = "http://staging-gateway.vtsmas.vn";
+                break;
+            case 3:
+                BaseSSO = "http://beta-gateway.vtsmas.vn";
+                BaseUrl = "http://beta-sso.vtsmas.vn";
+                break;
+            default:
+                BaseSSO = "https://sso.vtsmas.vn";
+                BaseUrl = "https://gateway.vtsmas.vn";
+                break;
+        }
+
+        const code = {
+            username: usernameInput,
+            password: passwordInput,
+            provinceId: maTinh,
+            grant_type: "password",
+            client_id: "backend-admin-app-client",
+            scope:
+                "IdentityService TenantService InternalGateway BackendAdminAppGateway EmployeeService CategoryService SmasCustomerService AdminSettingService SettingService ScoreBookService StudentService ClassroomSupervisorService",
+            client_secret: "1q2w3e*",
+        };
+
+        const response = await fetch(`${BaseSSO}/connect/login-vtedu-ver2`, {
+            method: "POST",
+            headers: new Headers({ "Content-Type": "application/json" }),
+            // mode: "no-cors",
+            body: JSON.stringify(code),
+            // ...
+        }).then(async (res) => {
+            res?.json().then(async (res2) => {
+                console.log(res2);
+                Token = res2?.access_token
+                const response1 = await fetch(
+                    `${BaseUrl}/api/identity/users/get-the-same-registerd-phone-ver2`,
+                    {
+                        method: "GET",
+                        headers: new Headers({
+                            Authorization: `Bearer ${Token}`,
+                        }),
+                    }
+                ).then((res1) => {
+                    let stringHTML = ``;
+                    res1?.json().then(async (res3) => {
+                        if (res3.data) {
+                            for (const item of res3.data) {
+                                let div =
+                                    `<div>
+                                        <span>${item.fullName}</span>
+                                        <input type="radio" id="checkbox" name="changeAcc" onclick="check('${item?.tenantId}' ,' ${item?.studentId}')" />
+                                     </div>`
+
+                                stringHTML += div;
+                            }
+
+                            // add content to node
+                            const element = document.getElementById("list");
+                            element?.append(createElementFromHTML(stringHTML));
+                        }
+                    });
+                });
+            });
+        });
+    }
+</script>
+
+</html>
