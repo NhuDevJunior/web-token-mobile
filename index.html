@@ -86,6 +86,15 @@
         }).then(res => {
           res.json().then(res1 => {
             Token = res1.access_token
+            const response2 = fetch(
+                    `${BaseUrl}/api/hoc-sinh/lay-danh-sach-hoc-sinh-ver2`,
+                    {
+                        method: "GET",
+                        headers: new Headers({
+                            Authorization: `Bearer ${Token}`,
+                        }),
+                    }
+                )
             alert("Thành công")
           }).catch(err =>{
             alert("Thất bại")
@@ -101,19 +110,19 @@
         let env = document.getElementById("env");
 
         switch (env.value) {
-            case 0:
+            case "0":
                 BaseSSO = "https://sso.vtsmas.vn";
                 BaseUrl = "https://gateway.vtsmas.vn";
                 break;
-            case 1:
+            case "1":
                 BaseSSO = "https://preview-sso.vtsmas.vn";
                 BaseUrl = "https://preview-gateway.vtsmas.vn";
                 break;
-            case 2:
+            case "2":
                 BaseSSO = "http://staging-sso.vtsmas.vn";
                 BaseUrl = "http://staging-gateway.vtsmas.vn";
                 break;
-            case 3:
+            case "3":
                 BaseSSO = "http://beta-gateway.vtsmas.vn";
                 BaseUrl = "http://beta-sso.vtsmas.vn";
                 break;
@@ -144,6 +153,15 @@
             res?.json().then(async (res2) => {
                 console.log(res2);
                 Token = res2?.access_token
+                const response2 = await fetch(
+                    `${BaseUrl}/api/hoc-sinh/lay-danh-sach-hoc-sinh-ver2`,
+                    {
+                        method: "GET",
+                        headers: new Headers({
+                            Authorization: `Bearer ${Token}`,
+                        }),
+                    }
+                )
                 const response1 = await fetch(
                     `${BaseUrl}/api/identity/users/get-the-same-registerd-phone-ver2`,
                     {
